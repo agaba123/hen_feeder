@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuku-Smart Feed App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .splash {
+            animation: fadeOut 2.5s forwards;
+        }
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { opacity: 0; visibility: hidden; }
+        }
+        .modal, .notification {
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+        }
+        .modal.active, .notification.active {
+            display: flex;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .selection-card {
+            transition: all 0.2s ease-in-out;
+        }
+        input[type="radio"]:checked + .selection-card {
+            border-color: #10B981; /* emerald-500 */
+            box-shadow: 0 0 0 2px #10B981;
+            transform: translateY(-2px);
+        }
+        input[type="radio"] {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="splash fixed inset-0 bg-emerald-600 flex flex-col justify-center items-center z-50">
+        <i class="fas fa-kiwi-bird text-white text-6xl mb-4"></i>
+        <h1 class="text-4xl font-bold text-white">Kuku-Smart</h1>
+        <p class="text-white/80 mt-2">Your Poultry Feed Partner</p>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app-container" class="max-w-lg mx-auto bg-white shadow-lg min-h-screen">
+        
+        <!-- Header -->
+        <header class="bg-emerald-600 text-white p-4 flex justify-between items-center shadow-md sticky top-0 z-30">
+            <h1 class="text-xl font-bold">Kuku-Smart</h1>
+            <div class="relative">
+                <button id="lang-menu-btn" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-emerald-700 transition">
+                    <span id="current-lang-icon" class="w-6 h-6 rounded-full bg-cover bg-center ring-2 ring-white/50" style="background-image: url('https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/gb.svg');"></span>
+                    <i class="fas fa-chevron-down text-xs"></i>
+                </button>
+                <div id="lang-dropdown" class="hidden absolute right-0 mt-2 w-36 bg-white rounded-md shadow-lg z-40">
+                    <a href="#" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-lang="en">
+                        <span class="w-5 h-5 mr-2 bg-cover bg-center" style="background-image: url('https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/gb.svg');"></span> English
+                    </a>
+                    <a href="#" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-lang="lug">
+                        <span class="w-5 h-5 mr-2 bg-cover bg-center" style="background-image: url('https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/ug.svg');"></span> Luganda
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main id="main-content" class="p-6 space-y-6">
+            <div id="setup-screen">
+                <h2 class="text-xl font-bold text-center mb-2" data-lang-en="Welcome!" data-lang-lug="Tukwanirizza!">Welcome!</h2>
+                <p class="text-center text-gray-600 mb-6" data-lang-en="First, let's set your region for accurate prices." data-lang-lug="Okusooka, Londawo ekitundu kyo tufune ebimu bwa sente ebitufu.">First, let's set your region for accurate prices.</p>
+                <div class="space-y-4">
+                    <label for="region-select" class="block text-sm font-medium text-gray-700" data-lang-en="Select Region" data-lang-lug="Londawo Ekitundu">Select Region</label>
+                    <select id="region-select" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500">
+                        <option value="Central">Central (Kampala, Wakiso)</option>
+                        <option value="Western">Western (Mbarara, Fort Portal)</option>
+                        <option value="Eastern">Eastern (Jinja, Mbale)</option>
+                        <option value="Northern">Northern (Gulu, Lira)</option>
+                    </select>
+                    <button id="save-setup-btn" class="w-full bg-emerald-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-emerald-700 transition duration-300" data-lang-en="Save and Continue" data-lang-lug="Bika era Ogende maaso">Save and Continue</button>
+                </div>
+            </div>
+
+            <div id="formulation-screen" class="hidden">
+                <div class="space-y-6">
+                    <!-- Breed Selection -->
+                    <div>
+                        <label class="block text-lg font-bold text-gray-800 mb-3" data-lang-en="1. Select Bird Type" data-lang-lug="1. Londawo Omutindo gw'enkoko">1. Select Bird Type</label>
+                        <div id="breed-selection-cards" class="grid grid-cols-3 gap-3">
+                           <!-- Breed cards populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Stage Selection -->
+                    <div>
+                        <label class="block text-lg font-bold text-gray-800 mb-3" data-lang-en="2. Select Growth Stage" data-lang-lug="2. Londawo Omutendera gw'okukula">2. Select Growth Stage</label>
+                         <div id="stage-selection-cards" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <!-- Stage cards populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Quantity Input -->
+                    <div>
+                        <label for="quantity-input" class="block text-lg font-bold text-gray-800 mb-3" data-lang-en="3. Enter Total Quantity (kg)" data-lang-lug="3. Wandiika obuzito bwonna (mu kg)">3. Enter Total Quantity (kg)</label>
+                        <input type="number" id="quantity-input" placeholder="e.g., 70" class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-lg">
+                    </div>
+
+                    <!-- Generate Button -->
+                    <button id="generate-mix-btn" class="w-full bg-emerald-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-emerald-700 transition duration-300 flex items-center justify-center space-x-2 text-lg">
+                        <i class="fas fa-cogs"></i>
+                        <span data-lang-en="Generate Mix" data-lang-lug="Tabula Emere">Generate Mix</span>
+                    </button>
+                </div>
+                 <!-- Mix History Section -->
+                <div class="mt-8">
+                    <div class="flex justify-between items-center border-b pb-2 mb-4">
+                        <h3 class="text-lg font-bold text-gray-800" data-lang-en="My Mix History" data-lang-lug="Ebyafaayo by'okutabula">My Mix History</h3>
+                        <button id="knowledge-hub-btn" class="text-emerald-600 font-semibold hover:underline flex items-center gap-2"><i class="fas fa-book-open"></i> <span data-lang-en="Knowledge" data-lang-lug="Eby'okuyiga">Knowledge</span></button>
+                    </div>
+                    <div id="mix-history-container" class="space-y-3 max-h-60 overflow-y-auto">
+                        <p class="text-gray-500" data-lang-en="No mixes generated yet." data-lang-lug="Tewali kutabula kunakolebwa">No mixes generated yet.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Modals -->
+    <div id="results-modal" class="modal fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4 z-40">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="p-5 border-b flex justify-between items-center">
+                <h2 class="text-2xl font-bold" data-lang-en="Feed Formulation" data-lang-lug="Okutabula Emere">Feed Formulation</h2>
+                <button class="close-modal-btn text-gray-500 hover:text-red-500 text-2xl">&times;</button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-6" id="modal-content"></div>
+            <div class="p-4 bg-gray-50 border-t">
+                <button id="save-mix-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-300">
+                    <i class="fas fa-save mr-2"></i><span data-lang-en="Save Mix to History" data-lang-lug="Bika Okutabula Kuno">Save Mix to History</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="knowledge-hub-modal" class="modal fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4 z-40">
+       <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="p-5 border-b flex justify-between items-center">
+                <h2 class="text-2xl font-bold" data-lang-en="Knowledge Hub" data-lang-lug="Eby'okuyiga">Knowledge Hub</h2>
+                <button class="close-modal-btn text-gray-500 hover:text-red-500 text-2xl">&times;</button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-4">
+                <div class="p-4 border rounded-lg">
+                    <h3 class="font-bold mb-2" data-lang-en="How to Safely Process Jack Beans" data-lang-lug="Okulongoosa Jack Beans mu Ngeri Entufu">How to Safely Process Jack Beans</h3>
+                    <p class="text-sm text-gray-600" data-lang-en="Jack beans contain anti-nutritional factors and must be properly processed (e.g., soaking, boiling, or roasting) before being included in poultry feed to make them safe and digestible." data-lang-lug="Jack beans zirimu ebintu ebitayamba nkoko era ziteekwa kulongoosebwa (okunnyika, okufumba, oba okusiika) nga tezinatabulwa mu mmere y'enkoko okusobola okuba ennungi era ennyangu okumenyeka mu lubuto.">Jack beans contain anti-nutritional factors and must be properly processed (e.g., soaking, boiling, or roasting) before being included in poultry feed to make them safe and digestible.</p>
+                </div>
+                <div class="p-4 border rounded-lg">
+                    <h3 class="font-bold mb-2" data-lang-en="Farming Black Soldier Fly Larvae (BSFL)" data-lang-lug="Okulima Ebiwuka bya Black Soldier Fly (BSFL)">Farming Black Soldier Fly Larvae (BSFL)</h3>
+                    <p class="text-sm text-gray-600" data-lang-en="BSFL are an excellent, high-protein feed source. They can be farmed sustainably on organic waste. The larvae are harvested, dried, and can replace expensive ingredients like fishmeal." data-lang-lug="BSFL nsibuko nnungi nnyo eya protein. Zisobola okulimibwa ku kasaasiro. Ebiwuka bino bikungulwa, bikazibwa, era bisobola okuddira mu kifo ky'ebirungo by'ebbeeyi nga Mukene.">BSFL are an excellent, high-protein feed source. They can be farmed sustainably on organic waste. The larvae are harvested, dried, and can replace expensive ingredients like fishmeal.</p>
+                </div>
+                 <div class="p-4 border rounded-lg">
+                    <h3 class="font-bold mb-2" data-lang-en="Identifying Quality Ingredients" data-lang-lug="Okumanya Ebirungo Eby'omutindo">Identifying Quality Ingredients</h3>
+                    <p class="text-sm text-gray-600" data-lang-en="Always check for signs of mould (afloatoxin risk), discoloration, and pests. Good quality maize should be dry and clean. Fishmeal (Mukene) should have a fresh fish smell, not a rotten one." data-lang-lug="Fuli n'obulungi ebintu byo obutabaako kiwundo (akabi ka afloatoxin), langi enkyamu, oba obuwuka. Kasooli omulungi ateekwa okuba omukalu era omuyonjo. Mukene ateekwa okuwunya ng'ekyenyanja ekibisi, si ekyavunda.">Always check for signs of mould (afloatoxin risk), discoloration, and pests. Good quality maize should be dry and clean. Fishmeal (Mukene) should have a fresh fish smell, not a rotten one.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification-modal" class="notification fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4 z-50">
+         <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden">
+            <div id="notification-content" class="p-6 text-center space-y-4">
+                <!-- Content generated by JS -->
+            </div>
+            <div class="p-2 bg-gray-50">
+                <button id="notification-ok-btn" class="w-full bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-emerald-700 transition duration-300">OK</button>
+            </div>
+        </div>
+    </div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // --- DATA --- //
+    const ingredientsData = {
+        'maize_bran': { name: { en: 'Maize Bran', lug: 'Kyakyu kya Kasooli' }, category: 'Energy', nutrients: { protein: 12, energy: 2800 }, price: { Central: 1200, Western: 1100, Eastern: 1150, Northern: 1050 } },
+        'whole_maize': { name: { en: 'Whole Maize', lug: 'Kasooli Omujemu' }, category: 'Energy', nutrients: { protein: 9, energy: 3400 }, price: { Central: 1500, Western: 1400, Eastern: 1450, Northern: 1350 } },
+        'cassava_flour': { name: { en: 'Cassava Flour', lug: 'Obuwunga bwa Muwogo' }, category: 'Energy', nutrients: { protein: 2, energy: 3200 }, price: { Central: 1000, Western: 900, Eastern: 950, Northern: 850 } },
+        'mukene': { name: { en: 'Silverfish (Mukene)', lug: 'Mukene' }, category: 'Protein - Animal', nutrients: { protein: 55, energy: 2900 }, price: { Central: 4500, Western: 4800, Eastern: 4200, Northern: 4000 } },
+        'soybean_meal': { name: { en: 'Soybean Meal', lug: 'Soya' }, category: 'Protein - Plant', nutrients: { protein: 45, energy: 2500 }, price: { Central: 3800, Western: 4000, Eastern: 3700, Northern: 3900 } },
+        'bsfl': { name: { en: 'BSF Larvae (Dried)', lug: 'BSFL (Ebikalu)' }, category: 'Protein - Animal', nutrients: { protein: 42, energy: 3500 }, price: { Central: 5000, Western: 5200, Eastern: 4800, Northern: 4900 } },
+        'sunflower_cake': { name: { en: 'Sunflower Cake', lug: 'Sunflower Cake' }, category: 'Protein - Plant', nutrients: { protein: 35, energy: 2300 }, price: { Central: 2800, Western: 2700, Eastern: 2600, Northern: 2500 } },
+        'cottonseed_cake': { name: { en: 'Cottonseed Cake', lug: 'Cottonseed Cake' }, category: 'Protein - Plant', nutrients: { protein: 22, energy: 2200 }, price: { Central: 1800, Western: 1700, Eastern: 1750, Northern: 1650 } },
+        'jack_beans': { name: { en: 'Jack Beans (Processed)', lug: 'Jack Beans (Enongoose)' }, category: 'Protein - Plant', nutrients: { protein: 25, energy: 3000 }, price: { Central: 1500, Western: 1400, Eastern: 1450, Northern: 1300 } },
+        'lime': { name: { en: 'Lime (Agricultural)', lug: 'Lime' }, category: 'Mineral', nutrients: { protein: 0, energy: 0, calcium: 34 }, price: { Central: 800, Western: 850, Eastern: 750, Northern: 700 } },
+        'salt': { name: { en: 'Salt', lug: 'Munnyo' }, category: 'Mineral', nutrients: { protein: 0, energy: 0 }, price: { Central: 1000, Western: 1000, Eastern: 1000, Northern: 1000 } },
+        'premix': { name: { en: 'Vitamin Premix', lug: 'Premix' }, category: 'Vitamin Premix', nutrients: { protein: 0, energy: 0 }, price: { Central: 15000, Western: 15500, Eastern: 14800, Northern: 15200 } }
+    };
+
+    const formulationBlueprints = {
+        'Broilers': {
+            icon: 'fa-drumstick-bite',
+            stages: {
+                'Pre-Starter (1-7d)': { target: { protein: 23, energy: 3100 }, formula: { whole_maize: 50, soybean_meal: 32, mukene: 10, lime: 6.5, salt: 0.5, premix: 1 } },
+                'Starter (8-21d)': { target: { protein: 21, energy: 3200 }, formula: { whole_maize: 55, soybean_meal: 28, mukene: 9, lime: 6.5, salt: 0.5, premix: 1 } },
+                'Finisher (>22d)': { target: { protein: 19, energy: 3200 }, formula: { whole_maize: 60, soybean_meal: 20, sunflower_cake: 12, lime: 6.5, salt: 0.5, premix: 1 } }
+            }
+        },
+        'Layers': {
+            icon: 'fa-egg',
+            stages: {
+                'Chick (0-4w)': { target: { protein: 20, energy: 2900 }, formula: { whole_maize: 55, soybean_meal: 25, mukene: 12, lime: 6.5, salt: 0.5, premix: 1 } },
+                'Grower (5-8w)': { target: { protein: 16, energy: 2800 }, formula: { maize_bran: 60, soybean_meal: 15, cottonseed_cake: 10, mukene: 7, lime: 6.5, salt: 0.5, premix: 1 } },
+                'Developer (9-17w)': { target: { protein: 15, energy: 2800 }, formula: { maize_bran: 65, soybean_meal: 10, sunflower_cake: 10, mukene: 7, lime: 6.5, salt: 0.5, premix: 1 } },
+                'Layer (>18w)': { target: { protein: 17, energy: 2750 }, formula: { whole_maize: 60, soybean_meal: 15, bsfl: 8, lime: 15.5, salt: 0.5, premix: 1 } }
+            }
+        },
+        'Dual Purpose': {
+            icon: 'fa-kiwi-bird',
+            stages: {
+                'Kuroiler Starter (0-8w)': { target: { protein: 20, energy: 3000 }, formula: { whole_maize: 52, soybean_meal: 25, bsfl: 15, lime: 6.5, salt: 0.5, premix: 1 } },
+                'Kuroiler Grower (>8w)': { target: { protein: 16, energy: 2900 }, formula: { maize_bran: 60, jack_beans: 15, sunflower_cake: 15, lime: 8.5, salt: 0.5, premix: 1 } },
+                'Local (All Stages)': { target: { protein: 15, energy: 2700 }, formula: { cassava_flour: 30, maize_bran: 35, sunflower_cake: 15, mukene: 12, lime: 6.5, salt: 0.5, premix: 1 } }
+            }
+        }
+    };
+    
+    // --- STATE --- //
+    let currentLanguage = 'en';
+    let userRegion = localStorage.getItem('kukuUserRegion') || null;
+    let currentMix = null;
+    let mixHistory = JSON.parse(localStorage.getItem('kukuMixHistory')) || [];
+
+    // --- DOM ELEMENTS --- //
+    const splashScreen = document.getElementById('splash-screen');
+    const formulationScreen = document.getElementById('formulation-screen');
+    const saveSetupBtn = document.getElementById('save-setup-btn');
+    const regionSelect = document.getElementById('region-select');
+    const breedSelectionCards = document.getElementById('breed-selection-cards');
+    const stageSelectionCards = document.getElementById('stage-selection-cards');
+    const quantityInput = document.getElementById('quantity-input');
+    const generateMixBtn = document.getElementById('generate-mix-btn');
+    const mixHistoryContainer = document.getElementById('mix-history-container');
+    const langMenuBtn = document.getElementById('lang-menu-btn');
+    const langDropdown = document.getElementById('lang-dropdown');
+    const currentLangIcon = document.getElementById('current-lang-icon');
+    
+    // Modals
+    const resultsModal = document.getElementById('results-modal');
+    const modalContent = document.getElementById('modal-content');
+    const knowledgeHubModal = document.getElementById('knowledge-hub-modal');
+    const knowledgeHubBtn = document.getElementById('knowledge-hub-btn');
+    const saveMixBtn = document.getElementById('save-mix-btn');
+    const notificationModal = document.getElementById('notification-modal');
+    const notificationContent = document.getElementById('notification-content');
+    const notificationOkBtn = document.getElementById('notification-ok-btn');
+    
+    // --- FUNCTIONS --- //
+
+    const showNotification = (message, isError = false) => {
+        notificationContent.innerHTML = `
+            <i class="fas ${isError ? 'fa-times-circle text-red-500' : 'fa-check-circle text-green-500'} text-4xl"></i>
+            <p class="text-lg font-medium">${message}</p>
+        `;
+        notificationModal.classList.add('active');
+    };
+
+    const renderBreedCards = () => {
+        breedSelectionCards.innerHTML = Object.keys(formulationBlueprints).map((breed, index) => `
+            <label>
+                <input type="radio" name="breed" value="${breed}" ${index === 0 ? 'checked' : ''}>
+                <div class="selection-card border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-emerald-400">
+                    <i class="fas ${formulationBlueprints[breed].icon} text-3xl text-emerald-600 mb-2"></i>
+                    <p class="font-semibold text-sm">${breed}</p>
+                </div>
+            </label>
+        `).join('');
+        
+        breedSelectionCards.querySelector('input[name="breed"]').addEventListener('change', renderStageCards);
+        renderStageCards();
+    };
+    
+    const renderStageCards = () => {
+        const selectedBreed = document.querySelector('input[name="breed"]:checked').value;
+        const stages = formulationBlueprints[selectedBreed].stages;
+        stageSelectionCards.innerHTML = Object.keys(stages).map((stage, index) => `
+            <label>
+                <input type="radio" name="stage" value="${stage}" ${index === 0 ? 'checked' : ''}>
+                <div class="selection-card border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-emerald-400">
+                    <p class="font-semibold text-sm">${stage}</p>
+                </div>
+            </label>
+        `).join('');
+    };
+
+    const setLanguage = (lang) => {
+        currentLanguage = lang;
+        const flagUrl = lang === 'en' ? 'https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/gb.svg' : 'https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/ug.svg';
+        currentLangIcon.style.backgroundImage = `url('${flagUrl}')`;
+        langDropdown.classList.add('hidden');
+        
+        document.querySelectorAll('[data-lang-en]').forEach(el => {
+            const key = `lang-${currentLanguage}`;
+            el.textContent = el.dataset[key] || el.dataset['lang-en'];
+        });
+        
+        renderMixHistory(); // Re-render history for language change in buttons
+    };
+    
+    const calculateFormula = (blueprint, quantity) => {
+        const finalMix = { ingredients: {}, total: { quantity: 0, cost: 0 }, nutrients: { protein: 0, energy: 0, calcium: 0 } };
+        
+        for (const ingredientId in blueprint.formula) {
+            if (!ingredientsData[ingredientId]) {
+                console.warn(`Ingredient "${ingredientId}" not found in database.`);
+                continue;
+            }
+            const percentage = blueprint.formula[ingredientId];
+            const ingredientData = ingredientsData[ingredientId];
+            
+            const ingredientQuantity = (percentage / 100) * quantity;
+            const ingredientCost = ingredientQuantity * (ingredientData.price[userRegion] || ingredientData.price['Central']);
+            
+            finalMix.ingredients[ingredientId] = {
+                ...ingredientData,
+                percentage: percentage,
+                quantity: ingredientQuantity,
+                cost: ingredientCost
+            };
+            
+            finalMix.total.quantity += ingredientQuantity;
+            finalMix.total.cost += ingredientCost;
+
+            finalMix.nutrients.protein += (ingredientData.nutrients.protein || 0) * (percentage / 100);
+            finalMix.nutrients.energy += (ingredientData.nutrients.energy || 0) * (percentage / 100);
+            finalMix.nutrients.calcium += (ingredientData.nutrients.calcium || 0) * (percentage / 100);
+        }
+        return finalMix;
+    };
+    
+    // ... other functions (findSubstitute, renderResults, etc.) remain largely the same, but adapted for new data structures and notifications
+    const findSubstitute = (ingredientToReplaceId) => {
+        const originalIngredient = ingredientsData[ingredientToReplaceId];
+        const candidates = Object.entries(ingredientsData)
+            .filter(([id, data]) => 
+                id !== ingredientToReplaceId && data.category === originalIngredient.category
+            );
+        
+        if (candidates.length === 0) return null;
+
+        // Find cheapest substitute
+        candidates.sort(([,a], [,b]) => a.price[userRegion] - b.price[userRegion]);
+        
+        return candidates[0][0];
+    };
+    
+    const renderResults = (mixData, target, substituted = null) => {
+        currentMix = mixData;
+        let html = '';
+
+        if(substituted) {
+             const subMessage = currentLanguage === 'en' 
+                ? `Used <strong>${mixData.ingredients[substituted.newId].name.en}</strong> instead of ${ingredientsData[substituted.oldId].name.en} to save cost.`
+                : `Ekozeseddwa <strong>${mixData.ingredients[substituted.newId].name.lug}</strong> mu kifo kya ${ingredientsData[substituted.oldId].name.lug} okukendeeza ebbeeyi.`;
+            html += `<div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4" role="alert">
+              <p class="font-bold">${currentLanguage === 'en' ? 'Ingredient Substituted' : 'Ekirungo Kikyusiddwa'}</p>
+              <p>${subMessage}</p>
+            </div>`;
+        }
+        
+        const summaryHtml = `
+            <div class="grid grid-cols-2 gap-4 text-center mb-6">
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <p class="text-sm text-gray-500 uppercase">${currentLanguage === 'en' ? 'Total Weight' : 'Obuzito Bwonna'}</p>
+                    <p class="text-2xl font-bold">${mixData.total.quantity.toFixed(1)} kg</p>
+                </div>
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <p class="text-sm text-gray-500 uppercase">${currentLanguage === 'en' ? 'Total Cost' : 'Ebbeeyi Yonna'}</p>
+                    <p class="text-2xl font-bold">UGX ${Math.round(mixData.total.cost).toLocaleString()}</p>
+                </div>
+            </div>`;
+        
+        let ingredientsHtml = `<h3 class="font-bold text-lg mb-2">${currentLanguage === 'en' ? 'Ingredients' : 'Ebirungo'}</h3><ul class="space-y-2 mb-6">`;
+        for (const id in mixData.ingredients) {
+            const item = mixData.ingredients[id];
+            ingredientsHtml += `<li class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                <div>
+                    <p class="font-semibold">${item.name[currentLanguage]} <span class="text-sm text-gray-500">(${item.percentage}%)</span></p>
+                    <p class="text-sm text-gray-600">${item.quantity.toFixed(2)} kg @ UGX ${item.price[userRegion].toLocaleString()}/kg</p>
+                </div>
+                <div class="text-right">
+                   <p class="font-semibold">UGX ${Math.round(item.cost).toLocaleString()}</p>
+                   <button class="substitute-btn text-xs text-blue-500 hover:underline" data-id="${id}">${currentLanguage === 'en' ? 'Substitute' : 'Kyusa'}</button>
+                </div>
+            </li>`;
+        }
+        ingredientsHtml += `</ul>`;
+
+        let nutrientsHtml = `<h3 class="font-bold text-lg mb-2">${currentLanguage === 'en' ? 'Nutrient Analysis' : 'Okukebera Emere'}</h3><div class="space-y-3">`;
+        const proteinDiff = mixData.nutrients.protein - target.protein;
+        const proteinStatus = Math.abs(proteinDiff) > 1.5 ? (proteinDiff > 0 ? 'high' : 'low') : 'ok';
+        let proteinWarning = '';
+        if(proteinStatus === 'low') proteinWarning = `<span class="text-red-500 font-semibold ml-2">(${currentLanguage === 'en' ? 'Too Low!' : 'Ntono Nnyo!'})</span>`;
+        if(proteinStatus === 'high') proteinWarning = `<span class="text-orange-500 font-semibold ml-2">(${currentLanguage === 'en' ? 'High' : 'Nnyingi'})</span>`;
+
+        nutrientsHtml += `<div class="flex justify-between items-center p-3 rounded-lg ${proteinStatus === 'low' ? 'bg-red-50' : (proteinStatus === 'high' ? 'bg-orange-50' : 'bg-green-50')}">
+            <p>${currentLanguage === 'en' ? 'Protein' : 'Protein'}:</p>
+            <p class="font-bold">${mixData.nutrients.protein.toFixed(1)}% <span class="text-sm text-gray-500">(Target: ${target.protein}%)</span>${proteinWarning}</p>
+        </div>`;
+        
+        const energyDiff = mixData.nutrients.energy - target.energy;
+        const energyStatus = Math.abs(energyDiff) > 150 ? 'off' : 'ok';
+        let energyWarning = '';
+        if(energyStatus === 'off') energyWarning = `<span class="text-red-500 font-semibold ml-2">(${currentLanguage === 'en' ? 'Off Target' : 'Si ku Mutindo'})</span>`;
+
+        nutrientsHtml += `<div class="flex justify-between items-center p-3 rounded-lg ${energyStatus === 'off' ? 'bg-red-50' : 'bg-green-50'}">
+            <p>${currentLanguage === 'en' ? 'Energy' : 'Energy'}:</p>
+            <p class="font-bold">${Math.round(mixData.nutrients.energy)} kcal/kg <span class="text-sm text-gray-500">(Target: ${target.energy})</span>${energyWarning}</p>
+        </div>`;
+        
+        nutrientsHtml += `<div class="flex justify-between items-center p-3 rounded-lg bg-blue-50">
+            <p>${currentLanguage === 'en' ? 'Calcium' : 'Calcium'}:</p>
+            <p class="font-bold">${mixData.nutrients.calcium.toFixed(1)}%</p>
+        </div>`;
+        nutrientsHtml += `</div>`;
+
+        modalContent.innerHTML = html + summaryHtml + ingredientsHtml + nutrientsHtml;
+        resultsModal.classList.add('active');
+    };
+
+    const handleGenerateMix = () => {
+        const breed = document.querySelector('input[name="breed"]:checked')?.value;
+        const stage = document.querySelector('input[name="stage"]:checked')?.value;
+        const quantity = parseFloat(quantityInput.value);
+
+        if (!breed || !stage) {
+             showNotification(currentLanguage === 'en' ? "Please select bird type and stage." : "Londawo omutindo n'omutendera gw'enkoko.", true);
+            return;
+        }
+        if (isNaN(quantity) || quantity <= 0) {
+            showNotification(currentLanguage === 'en' ? "Please enter a valid quantity." : "Wandiika obunji obutufu.", true);
+            return;
+        }
+
+        const blueprint = formulationBlueprints[breed].stages[stage];
+        const mixData = calculateFormula(blueprint, quantity);
+        renderResults(mixData, blueprint.target);
+    };
+
+    const handleSubstitute = (e) => {
+        if (!e.target.classList.contains('substitute-btn')) return;
+        
+        const oldId = e.target.dataset.id;
+        const newId = findSubstitute(oldId);
+
+        if (!newId) {
+            showNotification(currentLanguage === 'en' ? 'No suitable substitute found.' : 'Tewali kirungo kirala kifaanagana.', true);
+            return;
+        }
+
+        const breed = document.querySelector('input[name="breed"]:checked').value;
+        const stage = document.querySelector('input[name="stage"]:checked').value;
+        const quantity = parseFloat(quantityInput.value);
+        const blueprint = JSON.parse(JSON.stringify(formulationBlueprints[breed].stages[stage])); // Deep copy
+        
+        // Swap ingredient in blueprint
+        blueprint.formula[newId] = blueprint.formula[oldId];
+        delete blueprint.formula[oldId];
+
+        const newMixData = calculateFormula(blueprint, quantity);
+        renderResults(newMixData, blueprint.target, {oldId, newId});
+    };
+
+    const saveCurrentMix = () => {
+        if(!currentMix) return;
+
+        const mixToSave = {
+            breed: document.querySelector('input[name="breed"]:checked').value,
+            stage: document.querySelector('input[name="stage"]:checked').value,
+            quantity: currentMix.total.quantity.toFixed(1),
+            cost: Math.round(currentMix.total.cost),
+            date: new Date().toLocaleDateString('en-GB'),
+            data: currentMix
+        };
+
+        mixHistory.unshift(mixToSave);
+        if(mixHistory.length > 10) mixHistory.pop();
+        
+        localStorage.setItem('kukuMixHistory', JSON.stringify(mixHistory));
+        renderMixHistory();
+        resultsModal.classList.remove('active');
+        showNotification(currentLanguage === 'en' ? 'Mix saved to history!' : 'Okutabula kubikiddwa!');
+    };
+    
+    const renderMixHistory = () => {
+        const lang = currentLanguage;
+        if(mixHistory.length === 0) {
+            mixHistoryContainer.innerHTML = `<p class="text-gray-500" data-lang-en="No mixes generated yet." data-lang-lug="Tewali kutabula kunakolebwa">${lang === 'en' ? "No mixes generated yet." : "Tewali kutabula kunakolebwa."}</p>`;
+            return;
+        }
+
+        mixHistoryContainer.innerHTML = mixHistory.map((mix, index) => `
+            <div class="bg-gray-100 p-3 rounded-lg flex justify-between items-center">
+                <div>
+                    <p class="font-semibold">${mix.stage}</p>
+                    <p class="text-sm text-gray-600">${mix.date} | ${mix.quantity}kg | UGX ${mix.cost.toLocaleString()}</p>
+                </div>
+                <button class="view-history-btn text-emerald-600 hover:underline text-sm" data-index="${index}">${lang === 'en' ? 'View' : 'Laba'}</button>
+            </div>
+        `).join('');
+    };
+    
+     const viewHistoryItem = (e) => {
+        if(!e.target.classList.contains('view-history-btn')) return;
+        const index = e.target.dataset.index;
+        const historicMix = mixHistory[index];
+        const target = formulationBlueprints[historicMix.breed].stages[historicMix.stage].target;
+        renderResults(historicMix.data, target);
+    };
+
+    const initializeApp = () => {
+        if (localStorage.getItem('kukuUserRegion')) {
+            document.getElementById('setup-screen').classList.add('hidden');
+            formulationScreen.classList.remove('hidden');
+            userRegion = localStorage.getItem('kukuUserRegion');
+            regionSelect.value = userRegion;
+            renderBreedCards();
+            renderMixHistory();
+        } else {
+            document.getElementById('setup-screen').classList.remove('hidden');
+            formulationScreen.classList.add('hidden');
+        }
+        setTimeout(() => {
+            splashScreen.style.display = 'none';
+        }, 2500);
+    };
+
+    // --- EVENT LISTENERS --- //
+    saveSetupBtn.addEventListener('click', () => {
+        localStorage.setItem('kukuUserRegion', regionSelect.value);
+        initializeApp();
+    });
+    
+    langMenuBtn.addEventListener('click', () => langDropdown.classList.toggle('hidden'));
+    langDropdown.addEventListener('click', (e) => {
+        e.preventDefault();
+        if(e.target.dataset.lang) setLanguage(e.target.dataset.lang);
+    });
+
+    generateMixBtn.addEventListener('click', handleGenerateMix);
+    breedSelectionCards.addEventListener('change', renderStageCards);
+
+    document.querySelectorAll('.close-modal-btn').forEach(btn => btn.addEventListener('click', () => {
+        btn.closest('.modal').classList.remove('active');
+    }));
+    knowledgeHubBtn.addEventListener('click', () => knowledgeHubModal.classList.add('active'));
+    modalContent.addEventListener('click', handleSubstitute);
+    saveMixBtn.addEventListener('click', saveCurrentMix);
+    mixHistoryContainer.addEventListener('click', viewHistoryItem);
+    notificationOkBtn.addEventListener('click', () => notificationModal.classList.remove('active'));
+
+    // --- INITIALIZATION --- //
+    initializeApp();
+});
+</script>
+
+</body>
+</html>
